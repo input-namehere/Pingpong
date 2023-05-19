@@ -17,6 +17,7 @@ public class Game extends Canvas implements Runnable {
     private int tickCount = 0;
     private BufferedImage image = new BufferedImage(WIDTH,HEIGHT,BufferedImage.TYPE_INT_RGB);
     private int[] pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
+
     public Game(){
         setMaximumSize(new Dimension(WIDTH*SCALE, HEIGHT*SCALE));
         setMinimumSize(new Dimension(WIDTH*SCALE, HEIGHT*SCALE));
@@ -34,7 +35,7 @@ public class Game extends Canvas implements Runnable {
     @Override
     public void run() {
         long lastTime = System.nanoTime();
-        double nsPerTick = 1000000000D;
+        double nsPerTick = 1000000000D/60D;
         int frames =0;
         int ticks = 0;
         long lastTimer = System.currentTimeMillis();
@@ -43,19 +44,26 @@ public class Game extends Canvas implements Runnable {
             long now = System.nanoTime();
             delta += (now - lastTime)/nsPerTick;
             lastTime = now;
+            boolean shouldRender = true;
             while (delta>= 1) {
                 ticks ++;
                 tick();
                 delta -= 1;
-
-                System.out.println("tsek");
+                shouldRender = true;
             }
-            frames++;
-            render();
+            try {
+                Thread.sleep(2);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            if (shouldRender) {
+                frames++;
+                render();
+            }
             //System.out.println(frames+","+ticks);
             if (System.currentTimeMillis()-lastTimer>=1000){
                 lastTimer+=1000;
-                System.out.println(frames+","+ticks);
+                System.out.println(ticks +" ticks " + frames+ " frames");
                 frames= 0;
                 ticks =0;
             }
@@ -72,6 +80,10 @@ public class Game extends Canvas implements Runnable {
     }
     public void tick() {
         tickCount ++;
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = i +tickCount;
+
+        }
     }
     public void render(){
         BufferStrategy bs = getBufferStrategy();
@@ -82,6 +94,7 @@ public class Game extends Canvas implements Runnable {
         Graphics g = bs.getDrawGraphics();
         g.setColor(Color.black);
         g.fillRect(0,0,getWidth(),getHeight());
+        g.drawImage(image,0,0,getWidth(),getHeight(),null);
         g.dispose();
         bs.show();
     }
